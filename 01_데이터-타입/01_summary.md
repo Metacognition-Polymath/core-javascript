@@ -256,3 +256,9 @@ var copyObjectDeep = function (target) {
 - JSON문자열로 전환했다가 다시 JSON 객체로 바꾸는 것
 - **다만 메서드(함수)나 숨겨진 프로퍼티인 **proto**나 getter/setter 등과 같이 JSON으로 변경할 수 없는 프로퍼니들은 모두 무시**
 - httpRequest로 받은 데이터를 저장한 객체를 복사할 때 등 순수한 정보만 다룰 때 활용하기 좋은 방법
+
+## 1-6. undefined와 null
+
+- undefined : 사용자가 명시적으로 지정할 수도 있지만 값이 존재하지 않을 때 자바스크립트 엔진이 자동으로 부여
+
+* ## 자바스크립트 엔진이 자동으로 부여하는 경우
