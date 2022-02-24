@@ -140,7 +140,148 @@ console.log(a); // 1
   - 호이스팅
 
 #### 호이스팅 규칙
+
 - environmentRecord에 `매개변수의 이름`, `함수 선언`, `변수명` 등이 포함 됨
 - 예제가 var를 사용해서 복잡한 호이스팅 경우를 설명하는데 var를 그냥 안쓰면 될일 이다.
 
-#### 함수 서언문과 함수 표현식
+#### 함수 선언문과 함수 표현식
+
+```js
+// 예제 2-8 함수를 정의하는 세 가지 방식
+// 함수 선언문
+function a() {} // 함수 선언문 - 함수명 a가 곧 변수명
+
+// 함수 표현식 - 일반적으로 익명 함수 표현식을 의미
+var b = function () {}; // (익명)함수 표현식. 변수명 b가 곧 함수명
+
+var c = function d() {}; // (기명)함수 표현식. 변수명은 c, 함수명은 d - 거의 안씀
+c(); // 실행 OK.
+d(); // 에러 발생
+```
+
+```js
+// 원본 코드 - 호이스팅 전
+console.log(sum(1, 2));
+console.log(multiply(3, 4));
+
+function sum(a, b) {
+  // 함수 선언문
+  return a + b;
+}
+
+var multiply = function (a, b) {
+  // 함수 표현식
+  return a * b;
+};
+
+// 호이스팅을 마친 상태
+var sum = function sum(a, b) {
+  // 함수 선언문은 전체를 호이스팅
+  return a + b;
+};
+var multiply; // 변수는 선언부만 끌어올림
+console.log(sum(1, 2));
+console.log(multiply(3, 4));
+multiply = function (a, b) {
+  // 변수의 할당부는 원래 자리에 남겨둠
+  return a * b;
+};
+```
+
+- 실행 컨텍스트의 lexicalEnvironment는 두 가지 정보를 수집 - 식별자, 외부 환경 정보
+  - 정보 수집 과정에서 발생하는 호이스팅을 살펴보는 중
+- 코드가 길어길 경우에 대비하여 함수 선언문 보다 `함수 표현식`이 `안전`하다
+  - 선언한 뒤의 코드에만 영향을 미치기 때문
+
+### 2-3-2. 스코프, 스코프 체인, outerEnvironmentReference
+
+- 스코프(scope) : 식별자에 대한 `유효범위`
+- 스코프 체인 : 식별자의 유효범위를 안에서 부터 바깥으로 차례로 검색해 나가는 것
+  - LexicalEnvironment의 outerEnvironmentReference가 이것을 가능하게 함
+
+#### 스코프 체인
+
+- outerEnvironmentReference는 현재 호출된 함수가 `선언될 당시`의 LexicalEnvironment를 참조
+
+  - 선언될 당시 : `콜 스택 상에서` 어떤 `실행컨텍스트`가 `활성화` 된 상태
+
+- 동일한 식별자인 경우 스코프 체인을 따라 올라갈 때 가장 먼저 발견된 식발자에만 접근 가능
+
+```js
+// 예제 2-14 스코프 체인 확인(1) - 크롬 전용
+var a = 1;
+var outer = function () {
+  var b = 2;
+  var inner = function () {
+    console.dir(inner);
+  };
+  inner();
+};
+outer();
+```
+
+```js
+// 예제 2-15 스코프 체인 확인(2) - 크롬 전용
+var a = 1;
+var outer = function () {
+  var b = 2;
+  var inner = function () {
+    console.log(b);
+    console.dir(inner);
+  };
+  inner();
+};
+outer();
+```
+
+- 2-14에서 함수 내부에서 실제로 호출할 외부 변수들만 보여주는 반면 - b를 호출하지 않음
+- 2-15에선 b변수도 보여줌 - b를 호출
+- 외부 스코프의 식별자를 호출하지 않으면 내부에선 노출이 안됨
+  - 브라우저 성능 향상을 위해 이렇게 처리한 것으로 추정
+
+```js
+// 예제 2-16 스코프 체인 확인(3) - 크롬
+var a = 1;
+var outer = function () {
+  var b = 2;
+  var inner = function () {
+    console.log(b);
+    debugger;
+  };
+  inner();
+};
+outer();
+```
+
+#### 전역변수와 지역변수
+
+### 2-4. this
+
+- 실행 컨텍스트의 thisBinding에는 this로 지정된 객체가 저장 됨
+- 실행 컨텍스트 활성화 당시 this가 지저어되지 않은 경우 -> this에는 전역객체가 저장됨
+- 함수를 호출하는 방법에 따라 this에 저장되는 대상이 다름
+- 3장에서 자세히 다룰 예정
+
+### 2-5. 정리
+
+- 실행 컨텍스트 : 실행할 코드에 제공할 환경 정보를 모아놓은 객체
+  - 전역 컨텍스트 : 전역 공간에서 자동으로 생성
+  - eval
+  - 함수 실행에 의한 컨텍스트
+- 실행컨텍스트 객체는 활성화 시점에 VariableEnvironment, LexicalEnvironment, ThisBinding의 세 가지 정보를 수집
+- 실행 컨텍스트를 생성할 때
+  - VariableEnvironment, LexicalEnvironment 동일
+- 함수 실행 도중 변경
+
+  - LexicalEnvironment에만 반영
+
+- VariableEnvironment, LexicalEnvironment
+
+  - 두 개는 공통 class라고 봐도 무방할 듯(상속개념으로 이해)
+  - 매개변수명, 변수의 식별자, 선언한 함수의 함수명 등을 수집 : environmentRecord
+    - 호이스팅
+  - 바로 직전 컨텍스트의 LexicalEnvironment정보를 참조 : outerEnvironmentReference
+
+- 스코프 : 유효범위
+- this : 실행 컨텍스트를 활성화하는 당시에 지정된 this가 저장됨
+  - 지정되지 않은 경우엔 전역 객체가 저장 됨
