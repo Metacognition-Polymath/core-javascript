@@ -10,7 +10,9 @@
   - 예상과 다른 대상을 바라보고 있을 경우 그 원인을 효과적으로 추적하는 방법
 
 ## 3-1. 상황에 따라 달라지는 this
+
 - 자바스크립트에서 this는 기본적으로 실행컨텍스트가 생성될 때 결정 됨
+
   - 실행 컨텍스트는 함수를 호출할 때 생성
   - 즉, this는 함수를 호출할 때 결정된다.
     - 함수를 어떤 방식으로 호출하느냐에 따라 달라짐
@@ -18,6 +20,7 @@
 - 상황별 this가 어떤 값을 보게 되는지 살펴보자 + 원인
 
 ### 3-1-1. 전역 공간에서의 this
+
 - 전역공간에서 this는 전역 객체를 가리킵니다.
 - `전역 컨텍스트`를 `생성하는 주체`가 `전역 객체`이기 때문
 - `전역 객체` - `런타임 환경에 따라` 다른 이름과 정보를 가지고 있음
@@ -25,6 +28,7 @@
   - Node.js 환경 -> 전역 객체 : global
 
 #### this와 관련은 없지만 전역공간에서 발생하는 특이한 성질
+
 - `전역변수`를 선언하면 자바스크립트 엔진은 이를 `전역 객체의 프로퍼티로` 할당 함(window or global)
   - const는 해당 없음
   - var 를 이용해서 전역변수를 선언한 경우에만 해당
@@ -35,6 +39,7 @@
 var a = 1;
 console.log(window.a); // 1
 ```
+
 - 자바스크립트의 모든 변수는 사실 특정 객체의 프로퍼티로서 동작하기 때문
   - 특정 객체 : LexicalEnvironment(이하 L.E)
 - 자바스크립트 는 변수를 수집해서 L.E의 프로퍼티로 저장
@@ -43,9 +48,106 @@ console.log(window.a); // 1
 
 ```js
 // 예제 3-5 전역변수와 전역객체(3)
-var a= 1;
-delete window.a;
-console.log(a, window.a, this.a);
-
-// later
+var a = 1;
+delete window.a; // window.delete window.a; 와 같음
 ```
+
+- var a 로 전역변수 선언한 것은 지울 수 없지만
+- window.a 로 전역변수를 선언한 것은 delete로 지울 수 있음
+- 자바스크립트가 var로 전역 변수로 설정하면 해당 프로퍼티의 configurable(변경 및 삭제 가능성)을 false로 정의함
+
+### 3-1-2. 메서드로서 호출할 때 그 메서드 내부에서의 this
+
+- 함수 vs 메서드
+  - 함수를 실행하는 두 가지 방법 : 메서드 or 함수
+  - 차이 : 독립성
+  - 함수 : 그 자체로 독립적인 기능을 수행
+  - 메서드 : 자신을 호출한 대상 객체에 관한 동작을 수행
+- 자바스크립트는 상황별로 this 키워드에 다른 값을 부여하게 함으로써 이를 구현 함
+- 메서드에 대한 오해
+  - 객체 프로퍼티에 할당된 함수 : 반은 맞고 반은 틀림
+    - 객체의 메서드로서 호출할 경우에만 메서드로 동작하고
+    - 그렇지 않으면 함수로 동작
+
+```js
+// 예제 3-6. 함수로서 호출, 메서드로서 호출
+var func = function (x) {
+  console.log(this, x);
+};
+func(1); // this : window
+
+var obj = {
+  method: func,
+};
+obj.method(2); // this : obj
+```
+
+- 객체의 프로퍼티에 할당해서 호출하는 경웨 this가 달라짐
+  - 구분 : 일반적으로 함수앞에 `.` 이 있는지 여부에 따라 간단하게 구분 가능
+    - 유일한 예외 : 대괄호 표기법에 따른 경우에도 메서드로 호출한 것
+
+```js
+// 예제 3-7 메서드로서 호출 - 점 표기법, 대괄호 표기법
+var obj = {
+  method: function (x) {
+    console.log(this, x);
+  },
+};
+obj.method(1); // 메서드 호출 - 점 표기법
+obj["method"](2); // 메서드 호출 - 대괄호 표기법
+```
+
+#### 메서드 내부에서의 this
+
+- this에는 호출한 주체에 대한 정보가 담김
+  - 점 표기법의 경우 마지막 점 앞에 명시된 객체가 this가 됨
+
+```js
+// 예제 3-8. 메서드 내부에서의 this
+var obj = {
+  methodA: function () {
+    console.log(this);
+  },
+  inner: {
+    methodB: function () {
+      console.log(this);
+    },
+  },
+};
+obj.methodA(); // this : obj
+obj.inner.methodB(); // this : inner
+```
+
+### 3-1-3. 함수로서 호출할 때 그 함수 내부에서의 this
+
+#### 함수 내부에서의 this
+
+- 어떤 함수를 함수로서 호출할 경우에는 this가 지정되지 않음 : 전역객체(window)
+  - 자바스크립트를 개발에 참여한 개발자도 인정한 설계상의 오류
+
+#### 메서드 내부함수에서의 this
+
+```js
+// 예제 3-9. 내부함수에서의 this
+var obj1 = {
+  outer: function () {
+    console.log(this);
+    var innerFunc = function () {
+      console.log(this);
+    };
+    innerFunc(); // this : window
+
+    var obj2 = {
+      innerMethod: innerFunc,
+    };
+    obj2.innerMethod(); // this : obj2
+  },
+};
+obj1.outer(); // this : obj1
+```
+
+- this 바인딩
+  - 함수를 실행하는 당시의 주변환경(메서드 내부인지, 함수 내부인지 등)은 중요하지 않고
+  - 오직 해당 함수를 호출하는 구문 앞에 점 또는 대괄호 표기가 있는지 없는지가 관건
+
+#### 메서드의 내부 함수에서의 this를 우회하는 방법
