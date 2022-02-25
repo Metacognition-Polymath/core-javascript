@@ -151,3 +151,48 @@ obj1.outer(); // this : obj1
   - 오직 해당 함수를 호출하는 구문 앞에 점 또는 대괄호 표기가 있는지 없는지가 관건
 
 #### 메서드의 내부 함수에서의 this를 우회하는 방법
+* ES5까지 this를 우회하는 방법(ES6의 화살표함수에선 불필요)
+  - 변수를 활용 -> 예제 3-10
+
+```js
+// 예제 3-10. 내부함수에서의 this를 우회하는 방법
+var obj = {
+  outer: function() {
+    console.log(this);
+    var innerFunc1 = function() {
+      console.log(this);
+    };
+    innerFunc1(); // this : window
+
+    var self = this; // self의 변수명은 아무거나 해도 상관 없음 - self가 가장 널리 쓰임
+    var innerFunc2 = function () {
+      console.log(self);
+    };
+    innerFunc2(); // this : outer
+  }
+};
+obj.outer(); // outer의 바로 아래줄의 this : outer
+```
+
+#### this를 바인딩하지 않는 함수
+- ES6에서 함수 내부에서 this가 전역객체를 바라보는 문제를 보완하고자, this를 바인딩하지 않는 화살표 함수(arrow function)를 새로 도입함
+
+```js
+var obj = {
+  outer: function() {
+    console.log(this);
+    var innerFunc = () => {
+      console.log(this);
+    };
+    innerFunc(); // this : outer - arrow function의 this는 상위 scope를 가리킴
+  }
+}
+obj.outer();
+```
+
+- 그 밖에도 call, apply 등의 메서드를 활용해 함수를 호출할 때 명시적으로 this를 지정하는 방법이 있음 -> 3-2절에서 다룸
+
+### 3-1-4. 콜백 함수 호출 시 그 함수 내부에서의 this
+- 콜백 함수의 정의와 동작 원리 등에 대해선 다음 장(4장)에서 자세히 다룸
+- 여기선 this가 어떤 값을 참조하는지만 간단히 확인하고 넘어감
+
