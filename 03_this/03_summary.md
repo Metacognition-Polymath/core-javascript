@@ -151,15 +151,16 @@ obj1.outer(); // this : obj1
   - 오직 해당 함수를 호출하는 구문 앞에 점 또는 대괄호 표기가 있는지 없는지가 관건
 
 #### 메서드의 내부 함수에서의 this를 우회하는 방법
-* ES5까지 this를 우회하는 방법(ES6의 화살표함수에선 불필요)
+
+- ES5까지 this를 우회하는 방법(ES6의 화살표함수에선 불필요)
   - 변수를 활용 -> 예제 3-10
 
 ```js
 // 예제 3-10. 내부함수에서의 this를 우회하는 방법
 var obj = {
-  outer: function() {
+  outer: function () {
     console.log(this);
-    var innerFunc1 = function() {
+    var innerFunc1 = function () {
       console.log(this);
     };
     innerFunc1(); // this : window
@@ -169,30 +170,167 @@ var obj = {
       console.log(self);
     };
     innerFunc2(); // this : outer
-  }
+  },
 };
 obj.outer(); // outer의 바로 아래줄의 this : outer
 ```
 
 #### this를 바인딩하지 않는 함수
+
 - ES6에서 함수 내부에서 this가 전역객체를 바라보는 문제를 보완하고자, this를 바인딩하지 않는 화살표 함수(arrow function)를 새로 도입함
 
 ```js
 var obj = {
-  outer: function() {
+  outer: function () {
     console.log(this);
     var innerFunc = () => {
       console.log(this);
     };
     innerFunc(); // this : outer - arrow function의 this는 상위 scope를 가리킴
-  }
-}
+  },
+};
 obj.outer();
 ```
 
 - 그 밖에도 call, apply 등의 메서드를 활용해 함수를 호출할 때 명시적으로 this를 지정하는 방법이 있음 -> 3-2절에서 다룸
 
 ### 3-1-4. 콜백 함수 호출 시 그 함수 내부에서의 this
+
 - 콜백 함수의 정의와 동작 원리 등에 대해선 다음 장(4장)에서 자세히 다룸
 - 여기선 this가 어떤 값을 참조하는지만 간단히 확인하고 넘어감
 
+* 콜백함수란?
+  - 함수 A의 제어권을 다른 함수(또는 메서드) B에게 넘겨주는 경우,
+  - 함수 A를 콜백함수라 합니다.
+
+- 콜백함수에서 호출해도 this는 전역객체 이지만
+- addEventListener의 콜백함수에서 this는 addEventListener가 붙은 (HTML)엘리먼트를 의미함
+
+### 3-1-5. 생성자 함수 내부에서의 this
+
+- 생성자 함수란?
+  - 어떤 공통된 성질을 지니는 객체들을 생성하는 데 사용하는 함수
+  - 클래스를 통해 만든 객체 인스턴스를 만들 때 생성자가 호출 됨
+  - 7장에서 자세히 다룰 예정
+
+* 생성자 : 구체적인 인스턴스를 만들기 위한 일종의 틀
+
+  - 해당 클래스의 공통 속성들이 미리 준비되어 있고
+  - 구체적인 인스턴스 개성을 더해 개별 인스턴스를 만들 수 있음
+
+* 자바스크립트는 함수에 생성자로서의 역할을 new 명령어로 동작시키게 할 수 있음
+* 어떤 함수가 생성자 함수로서 호출된 경우(new + 함수) 내부에서의 this는 새로 만들 구체적인 인스턴스 자신이 됨
+
+```js
+// 예제 3-13. 생성자 함수
+var Cat = function (name, age) {
+  this.bark = "야옹";
+  this.name = name;
+  this.age = age;
+};
+
+var choco = new Cat("초코", 7);
+var nabi = new Cat("나비", 5);
+console.log(choco, nabi);
+```
+
+## 3-2. 명시적으로 this를 바인딩하는 방법
+
+- `addEventListener` 또는 `new + 함수` 같이 상식적으로 this에 전역객체가 할당될 것이라고 생각했지만
+- 그렇지 않은 경우엔 3-2에 나오는 방법들 중 하나를 사용했을 것이라 추측할 수 있음
+
+### 3-2-1. call 메서드
+
+```js
+Function.prototype.call(thisArg, funcArg1, funcArg2, ...);
+```
+
+- func1.call(`this에 바인딩할 객체`, func1의 arg1, function의 arg2, ...);
+
+```js
+// 예제 3-14. call 메서드
+var func = function (a, b, c) {
+  console.log(this, a, b, c);
+};
+
+func(1, 2, 3); // window, 1, 2, 3;
+func.call({ x: 1 }, 1, 2, 3); // {x : 1}, 1, 2, 3;
+```
+
+- call메서드의 첫 번째 파리미터로 전달한 것이 this에 바인딩되고 나머지는 순차적으로 func의 파라미터로 전달 됨
+
+### 3-2-2. apply 메서드
+
+```js
+Function.prototype.apply(thisArg, [funcArg1, funcArg2, ...]);
+```
+
+- 3-2-1의 call과 동일 하지만 funcArg1를 apply의 두번째 파라미터의 배열로 받아서 처리한다는 차이가 있음
+
+```js
+// 예제 3-16. apply 메서드
+var func = function (a, b, c) {
+  console.log(this, a, b, c);
+};
+
+func(1, 2, 3); // window, 1, 2, 3;
+func.call({ x: 1 }, [1, 2, 3]); // {x : 1}, 1, 2, 3;
+```
+
+### 3-2-3. call / apply 메서드의 활용
+
+- 객체를 배열로 변환하는 것은 Object의 keys, values, entries 메서드를 사용하는 것이 더 낫다.
+  - https://ko.javascript.info/keys-values-entries
+
+```js
+// 예제 3-20. ES6의 Array.from 메서드
+var obj = {
+  a: "aa",
+  b: "bb",
+  c: "cc",
+};
+
+var arr = Array.from(obj);
+console.log(arr);
+```
+
+\*\* [Array.from](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/from)
+
+- Array.from() 메서드는 유사 배열 객체(array-like object)나 반복 가능한 객체(iterable object)를 얕게 복사해 새로운Array 객체를 만듭니다.
+
+```js
+console.log(Array.from("foo"));
+// expected output: Array ["f", "o", "o"]
+
+console.log(Array.from([1, 2, 3], (x) => x + x));
+// expected output: Array [2, 4, 6]
+```
+
+```js
+// 예제 3-24. 최대값, 최소값 구하기
+const numbers = [10, 20, 3, 16, 45];
+const max = Math.max(...numbers);
+const min = Math.min(...numbers);
+console.log(max, min); // 45, 3
+```
+
+### 3-2-4. bind 메서드
+
+```js
+Function.prototype.bind(thisArg);
+```
+
+- ES5에서 추가 됨
+- call, apply와 달리 this에 할당할 객체만 전달하면 this바인딩이 된 함수를 리턴함
+
+```js
+var func = function (a, b) {
+  console.log(this, a, b);
+};
+func(1, 2); // window, 1, 2
+
+var bindFunc = func.bind({ x: 1 });
+bindFunc(1, 2); // { x: 1 }, 1, 2
+```
+
+#### name 프로퍼티
