@@ -334,3 +334,121 @@ bindFunc(1, 2); // { x: 1 }, 1, 2
 ```
 
 #### name 프로퍼티
+
+- 그 함수의 이름을 리턴하는 함수 고유 프로퍼티
+
+```js
+// 예제 3-26. bind 메서드 - name 프로퍼티
+var func = function (a, b, c, d) {
+  console.log(this, a, b, c, d);
+};
+var bindFunc = func.bind({ x: 1 }, 4, 5); // bind 할 때 parameter를 전달하지 않아도 되지만 전달해도 된다.
+console.log(func.name); // func
+console.log(bindFunc.name); // bound func
+```
+
+- Function.bind로 bind한 함수는 name 프로퍼티가 `bound functionName`으로 바뀐다.
+- call이나 apply 보다 코드를 추적하기 더 수월 함
+
+#### 상위 컨텍스트의 this를 내부함수나 콜백 함수에 전달하기
+
+- 3-1-3에서 메서드의 내부함수에서 메서드의 this를 그대로 바라보게 하기 위한 방법을 소개(self 등의 변수를 활용한 우회법)
+- call, apply, bind 메서드를 이용하면 더 깔끔하게 처리할 수 있음
+
+```js
+// 예제 3-27. 내부함수에 this 전달 - call vs bind
+// 1) call메서드를 이용한 내부함수에 this 전달
+var obj = {
+  outer: function () {
+    console.log(this);
+    var innerFunc = function () {
+      console.log(this);
+    };
+    innerFunc.call(this);
+  },
+};
+obj.outer();
+
+// 2) bind 메서드를 이용한 내부함수에 this 전달
+var obj = {
+  outer: function () {
+    console.log(this);
+    var innerFunc = function () {
+      console.log(this);
+    }.bind(this);
+    innerFunc();
+  },
+};
+obj.outer();
+```
+
+```js
+// 예제 3-28. bind 메서드 - 내부함수에 this 전달
+var obj = {
+  logThis: function () {
+    console.log(this);
+  },
+  logThisLater1: function () {
+    ["a"].forEach(this.logThis);
+    setTimeout(this.logThis, 300); // this : 전역 객체(global or window)
+  },
+  logThisLater2: function () {
+    setTimeout(this.logThis.bind(this), 500); // this : obj
+  },
+};
+obj.logThisLater1();
+obj.logThisLater2();
+```
+
+### 3-2-5. 화살표 함수의 예외사항
+
+- 화살표함수 내의 this는 아에 없고 접근하고자 하면 스코프체인상 가장 가까운 this에 접근하게 됨
+
+```js
+// 예제 3-29. 화살표 함수 내부에서의 this
+var obj = {
+  outer: function () {
+    console.log(this);
+    var innerFunc = () => {
+      console.log(this);
+    };
+    innerFunc(); // this : outer
+  },
+};
+obj.outer();
+```
+
+- 화살표 함수를 사용하면 bind, call, apply 등으로 바인딩 하지 않아도 가장 가까운 this에 접근하게 된다.
+
+### 3-2-6. 별도의 인자로 this를 받는 경우(콜백 함수 내에서의 this)
+
+- 콜백함수 -> 4장에서 자세히 다룸
+- 콜백함수를 인자로 받는 메서드 중 일부는 추가로 this로 지정할 객체를 인자로 지정할 수 있는 경우가 있음
+- 이러한 메서드의 thisArg값을 지정하면 콜백 함수 내부에서 this 값을 원하는 대로 변경할 수 있음
+  - 주로 배열의 메서드(forEach, map 등)
+  - Set, Map 등의 메서드에서도 일부 존재
+
+```js
+// 예제 3-30. thisArg를 받는 경우 예시 - forEach
+var report = {
+  sum: 0,
+  count: 0,
+  add: function () {
+    var args = Array.prototype.slice.call(arguments);
+    args.forEach(function (entry) {
+      this.sum += entry;
+      ++this.count;
+    }, this); // 콜백함수의 this에 할당될 객체를 전달할 수 있음 - report를 전달함
+  },
+  average: function () {
+    return this.sum / this.count;
+  },
+};
+```
+
+## 3-3. 정리
+
+- 전역공간에서의 this는 전역객체(브라우저 : window, Node.js : global)
+- 어떤 함수를 메서드로서 호출한 경우 this는 메서드 호출 주체를 참조
+- 어떤 함수를 함수로서 호출한 경우 this는 전역 객체를 참조. 메서드 내부함수에서도 같음
+- 생성자 함수(new 뒤에 오는 함수)에서의 this는 생성될 인스턴스를 참조
