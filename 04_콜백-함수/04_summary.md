@@ -104,3 +104,90 @@ setTimeout(obj1.func.bind(obj2), 1500);
 ```
 
 ## 4-5. 콜백 지옥과 비동기 제어
+- 콜백지옥 : 콜백함수를 익명함수로 전달하는 과정이 반복되어 코드의 들여쓰기 수준이 감당하기 힘들어지는 현상
+- 비동기 vs 동기
+  - 동기 : 현재 실행 중인 코드가 완료된 후에 다음 코드를 실행하는 방식
+    - CPU의 계산에 의해 즉시 처리가 가능한 코드는 동기적인 코드
+  - 비동기 : 현재 실행중인 코드의 완료 여부와 무관하게 즉시 다음 코드로 넘어감
+    - 사용자의 요청에 의해 특정 시간이 경과되기 전까지 보류하거나 : setTimeout
+    - 사용자의 직접적인 개입이 있을 때 비로소 어떤 함수를 실행하도록 대기한다거나 : addEventListener
+    - 웹 브라우저 자체가 아닌 별도의 대상에 무언가를 요청하고 그에 대한 응답이 왔을 때 어떤 함수를 실행하도록 대기 : XMLHttpRequest
+  - 현대 자바스크립트는 웹 복잡도가 높아진 만큼 비동기적인 코드의 비중이 예전보다 훨씬 높아진 상황
+    - 콜백 지옥에 빠지기 쉬워짐
+
+```js
+// 예제 4-12 콜백 지옥 예시
+setTimeout(function (name) {
+  var coffeeList = name;
+  console.log(coffeeList);
+
+  setTimeout(function (name) {
+    coffeeList += ', ' + name;
+    console.log(coffeeList);
+
+    setTimeout(function (name) {
+      coffeeList += ', ' + name;
+      console.log(coffeeList);
+    }, 1000, '에스프레소');
+  }, 1000, '아메리카노');
+}, 1000, '카페모카');
+```
+
+```js
+// 예제 4-13 콜백 지옥 해결 - 기명함수로 변환
+var coffeeList = '';
+
+var addEspresso = function (name) {
+  coffeeList += name;
+  console.log(coffeeList);
+  setTimeout(addAmericano, 500, '아메리카노');
+}
+
+var addAmericano = function (name) {
+  coffeeList += name;
+  console.log(coffeeList);
+  setTimeout(addMocha, 500, '카페모카');
+}
+
+var addMocha = function (name) {
+  coffeeList += name;
+  console.log(coffeeList);
+}
+
+setTimeout(addEspresso, 500, '에스프레소');
+```
+
+#### 비동기적인 일련의 작업을 동기적인 것 처럼 보이게끔 처리해주는 장치들
+- Promise : ES6에서 추가 됨
+- async/await : ES2017에서 추가 됨
+
+```js
+// 예제 4-14. 비동기 작업의 동기적 표현(1) - Promise(1)
+new Promise(function (resolve) {
+  setTimeout(function () {
+    var name = '에스프레소';
+    console.log(name);
+    resolve(name);
+  }, 500);
+}).then(function (prevName) {
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+    var name = prevName + '아메리카노';
+    console.log(name);
+    resolve(name);
+  }, 500);
+  })
+}).then(function (prevName) {
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+    var name = prevName + '카페모카';
+    console.log(name);
+    resolve(name);
+  }, 500);
+  })
+});
+```
+
+```js
+
+```
