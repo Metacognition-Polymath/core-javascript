@@ -104,6 +104,7 @@ setTimeout(obj1.func.bind(obj2), 1500);
 ```
 
 ## 4-5. 콜백 지옥과 비동기 제어
+
 - 콜백지옥 : 콜백함수를 익명함수로 전달하는 과정이 반복되어 코드의 들여쓰기 수준이 감당하기 힘들어지는 현상
 - 비동기 vs 동기
   - 동기 : 현재 실행 중인 코드가 완료된 후에 다음 코드를 실행하는 방식
@@ -117,47 +118,60 @@ setTimeout(obj1.func.bind(obj2), 1500);
 
 ```js
 // 예제 4-12 콜백 지옥 예시
-setTimeout(function (name) {
-  var coffeeList = name;
-  console.log(coffeeList);
-
-  setTimeout(function (name) {
-    coffeeList += ', ' + name;
+setTimeout(
+  function (name) {
+    var coffeeList = name;
     console.log(coffeeList);
 
-    setTimeout(function (name) {
-      coffeeList += ', ' + name;
-      console.log(coffeeList);
-    }, 1000, '에스프레소');
-  }, 1000, '아메리카노');
-}, 1000, '카페모카');
+    setTimeout(
+      function (name) {
+        coffeeList += ", " + name;
+        console.log(coffeeList);
+
+        setTimeout(
+          function (name) {
+            coffeeList += ", " + name;
+            console.log(coffeeList);
+          },
+          1000,
+          "에스프레소"
+        );
+      },
+      1000,
+      "아메리카노"
+    );
+  },
+  1000,
+  "카페모카"
+);
 ```
 
 ```js
 // 예제 4-13 콜백 지옥 해결 - 기명함수로 변환
-var coffeeList = '';
+var coffeeList = "";
 
 var addEspresso = function (name) {
   coffeeList += name;
   console.log(coffeeList);
-  setTimeout(addAmericano, 500, '아메리카노');
-}
+  setTimeout(addAmericano, 500, "아메리카노");
+};
 
 var addAmericano = function (name) {
   coffeeList += name;
   console.log(coffeeList);
-  setTimeout(addMocha, 500, '카페모카');
-}
+  setTimeout(addMocha, 500, "카페모카");
+};
 
 var addMocha = function (name) {
   coffeeList += name;
   console.log(coffeeList);
-}
+};
 
-setTimeout(addEspresso, 500, '에스프레소');
+setTimeout(addEspresso, 500, "에스프레소");
 ```
 
 #### 비동기적인 일련의 작업을 동기적인 것 처럼 보이게끔 처리해주는 장치들
+
 - Promise : ES6에서 추가 됨
 - async/await : ES2017에서 추가 됨
 
@@ -165,29 +179,112 @@ setTimeout(addEspresso, 500, '에스프레소');
 // 예제 4-14. 비동기 작업의 동기적 표현(1) - Promise(1)
 new Promise(function (resolve) {
   setTimeout(function () {
-    var name = '에스프레소';
+    var name = "에스프레소";
     console.log(name);
     resolve(name);
   }, 500);
-}).then(function (prevName) {
-  return new Promise(function (resolve) {
-    setTimeout(function () {
-    var name = prevName + '아메리카노';
-    console.log(name);
-    resolve(name);
-  }, 500);
+})
+  .then(function (prevName) {
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        var name = prevName + "아메리카노";
+        console.log(name);
+        resolve(name);
+      }, 500);
+    });
   })
-}).then(function (prevName) {
-  return new Promise(function (resolve) {
-    setTimeout(function () {
-    var name = prevName + '카페모카';
-    console.log(name);
-    resolve(name);
-  }, 500);
-  })
-});
+  .then(function (prevName) {
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        var name = prevName + "카페모카";
+        console.log(name);
+        resolve(name);
+      }, 500);
+    });
+  });
 ```
 
 ```js
+// 예제 4-15. 비동기 작업의 동기적 표현(2) - Promise(2)
+var addCoffee = function (name) {
+  return function (prevName) {
+    // 클로저 - 5장에서 자세히 다룸
+    return new Promise(function (resolve) {
+      // 클로저 - 5장에서 자세히 다룸
+      setTimeout(function () {
+        var newName = prevName ? prevName + ", " + name : name;
+        console.log(newName);
+        resolve(newName);
+      }, 500);
+    });
+  };
+};
 
+addCoffee("에스프레소")()
+  .then(addCoffee("아메리카노"))
+  .then(addCoffee("카페모카"));
+```
+
+```js
+// 예제 4-16. 비동기 작업의 동기적 표현(3) - Generator
+var addCoffee = function (prevName, name) {
+  setTimeout(function () {
+    coffeeMaker.next(prevName ? prevName + ", " + name : name);
+  }, 500);
+};
+
+var coffeeGenerator = function* () {
+  var espresso = yield addCoffee("", "에스프레소"); // '' == false
+  console.log(espresso);
+  var americano = yield addCoffee(espresso, "아메리카노");
+  console.log(americano);
+  var mocha = yield addCoffee(americano, "카페모카");
+  console.log(mocha);
+};
+
+var coffeeMaker = coffeeGenerator(); // Generator 함수를 실행하면 Iterator가 반환 // Iterator는 next라는 메서드를 가지고 있음
+
+coffeeMaker.next();
+```
+
+- ES6의 Generator를 이용
+- Generator 함수를 실행하면 Iterator가 반환
+  - Iterator는 next라는 메서드를 가지고 있음
+    - next 메서드 호출하면 Generator 함수 내부에서 가장 먼저 등장하는 yield에서 함수의 실행을 멈춤
+    - 이후 다시 시작할 때는 멈췄던 부분부터 시작해서 그 다음에 등장하는 yield에서 함수의 실행을 멈춤
+- 비동기 작업이 완료되는 시점마다 next 메서드를 호출하면 Generator 함수 내부의 소스가 위에서부터 아래로 순차적으로 진행 됨
+
+<details>
+<summary>Generator.prototype.next</summary>
+
+```js
+// Syntax
+next(value);
+```
+
+Copy to Clipboard
+Parameters
+value
+The value to send to the generator.
+
+The value will be assigned as a result of a yield expression. For example, in variable = yield expression, the value passed to the .next() function will be assigned to variable.
+
+next 메서드의 parameter로 전달한 것은 yield에서 반환된다.
+
+참고
+
+- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator/next
+
+</details>
+
+```js
+// 예제 4-17 비동기 작업의 동기적 표현(4) - Promise + async/await
+
+var addCoffee = function (name) {
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+      resolve(name);
+    }, 500);
+  });
+};
 ```
