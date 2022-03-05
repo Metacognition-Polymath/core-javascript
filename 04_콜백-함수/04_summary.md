@@ -279,7 +279,6 @@ next 메서드의 parameter로 전달한 것은 yield에서 반환된다.
 
 ```js
 // 예제 4-17 비동기 작업의 동기적 표현(4) - Promise + async/await
-
 var addCoffee = function (name) {
   return new Promise(function (resolve) {
     setTimeout(function () {
@@ -287,4 +286,72 @@ var addCoffee = function (name) {
     }, 500);
   });
 };
+
+var coffeeMaker = async function () {
+  var coffeeList = "";
+  var _addCoffee = async function (name) {
+    coffeeList += (coffeeList ? "," : "") + (await addCoffee(name));
+  };
+
+  await _addCoffee("에스프레소");
+  console.log(coffeeList);
+  await _addCoffee("아메리카노");
+  console.log(coffeeList);
+  await _addCoffee("카페모카");
+  console.log(coffeeList);
+};
+
+coffeeMaker();
 ```
+
+- add
+
+#### Promise
+
+- 자바스크립트 비동기 처리에 사용되는 객체
+
+```ts
+var Promise: PromiseConstructor
+new <any>(executor: (resolve: (value: any) => void, reject: (reason?: any) => void) => void) => Promise<any>
+```
+
+- Creates a new Promise.
+- @param executor
+
+  - A callback used to initialize the promise.
+  - This callback is passed two arguments:
+    - a resolve callback used to resolve the promise with a value or the result of another promise,
+    - and a reject callback used to reject the promise with a provided reason or error.
+
+- executor라는 함수를 생성자로 받고
+  - executor 함수는 resolve와 reject함수를 parameter로 받는데
+    - 비동기 함수가 성공적으로 실행되면 resolve가 실행되고
+    - 실패하면(에러발생) reject가 실행
+
+#### Promise 실제 예제 - XMLHttpRequest 를 이용해서 이미지 불러오기
+
+- https://github.com/mdn/js-examples/blob/master/promises-test/index.html
+
+#### Promise & async / await 결론
+
+- await의 return은 Promise 인스턴스의 then - 비동기 로직이 성공한 경우 - 으로 전달되는 parameter와 같다.
+- Promise 생성자로 전달하는 executor의 resolve에 전달하는 parameter는 비동기 로직이 성공한 경우 then의 parameter로 전달된다
+  - `executor 안`에서 `비동기 로직`이 있어야 한다.
+  - async/await의 예외 처리는 try/catch로 한다.
+
+## 4-6. 정리
+
+- 콜백 함수는 다른 코드에 인자를 넘겨줌으로써 그 제어권도 함께 위임한 함수
+- 제어권을 넘겨받은 코드는 다음과 같은 제어권을 가짐
+  - 1. 콜백함수를 호출하는 시점을 스스로 판단해서 실행
+  - 2. 코랙함수를 호출할 때 인자로 넘겨줄 값들 및 그 순서가 정해져 있음.
+    - 이 순서를 따르지 않고 코드를 작성하면 엉뚱한 결과를 얻게 됨
+  - 3. 콜백 함수의 this가 무엇을 바라보도록 할지가 정해져 있는 경우도 있음.
+    - 정하지 않은 경우엔 전역객체를 바라봄
+    - 사용자 임의로 this를 바꾸고 싶을 경우 bind 메서드를 활용
+- 어떤 함수에 인자로 메서드를 전달하더라도 이는 결국 함수로서 실행 됨 - this에 전역객체 할당
+- 비동기 제어를 위해 콜백 함수를 사용하다 보면 콜백 지옥에 빠지기 쉬움
+  - 콜백지옥에서 벗어 나는 방법
+    - Promise
+    - Generator
+    - async/await 등
