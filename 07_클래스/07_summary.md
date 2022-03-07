@@ -41,4 +41,32 @@
   - [출처](https://velog.io/@jindol/%EC%BD%94%EC%96%B4-%EC%9E%90%EB%B0%94%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8-07.-%ED%81%B4%EB%9E%98%EC%8A%A4-ex8c9yzg)
 - 프로토타입에 의한 메서드는 프로토타입 메서드라 부르자
 
-// 예제 7-1 부터 이어서 하자
+```js
+// 예제 7-1. 스틱 메드, 프로토타입 메드
+
+// 생성자
+var Rectangle = function (width, height) {
+  this.width = width;
+  this.height = height;
+};
+
+// (프로토타입) 메서드
+Rectangle.prototype.getArea = function () {
+  return this.width * this.height;
+};
+
+// 스태틱 메서드
+Rectangle.isRectangle = function (instance) {
+  return (
+    instance instanceof Rectangle && instance.width > 0 && instance.height > 0
+  );
+};
+
+var rect1 = new Rectangle(3, 4);
+console.log(rect1.getArea()); // 12
+console.log(rect1.isRectangle(rect1)); // Error
+console.log(Rectangle.isRectangle(rect1)); // true
+```
+
+- 프로토타입이 아닌 생성자 함수에 직접 프로퍼티를 할당하면 스태틱 메서드(프로퍼티)가 되고
+  - 이것은 인스턴스에선 사용할 수 없고 생성자함수를 통해서만 사용할 수 있음
